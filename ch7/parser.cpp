@@ -1,18 +1,32 @@
-/* grammars:
- * 	expression:
- * 		term
- * 		expression '+' term
- * 		expression '-' term
- * 	term:
- * 		primary
- * 		term '*' primary
- * 		term '/' primary
- * 		term '%' primary
- * 	primary:
- * 		number
- * 		'('expression')'
- * 	number:
- * 		floating point literal
+/* 
+ * 		Simple Calculator
+ *
+ * 		Revesion history:
+ *
+ * 			Revised by Waleed Yaser April 2019
+ * 			Originally written by Waleed Yaser
+ * 				(waleedyaser95@gmail.com) March 2019
+ *
+ * 		This program implements a basic expression calculator.
+ * 		input from cin; output to cout.
+ * 		The grammar for input is:
+ * 			expression:
+ * 				term
+ * 				expression '+' term
+ * 				expression '-' term
+ * 			term:
+ * 				primary
+ * 				term '*' primary
+ * 				term '/' primary
+ * 				term '%' primary
+ * 			primary:
+ * 				number
+ * 				'('expression')'
+ * 			number:
+ * 				floating point literal
+ *
+ *
+ * 		input comes from cin through the Token_stream called ts.
  */
 
 #include <iostream>
@@ -72,8 +86,8 @@ Token Token_Stream::get()
 	char ch;
 	cin >> ch;
 	switch (ch) {
-		case 'q':
-		case ';':
+		case QUIT:
+		case PRINT:
 		case '+': case '-': case '*': case '/': case '(': case ')':
 			return Token{ch};
 		case '.':
