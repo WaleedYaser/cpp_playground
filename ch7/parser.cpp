@@ -84,7 +84,7 @@ Token Token_Stream::get()
 			cin >> val;
 			return Token{NUMBER, val};
 		default:
-			error("bad tocken");
+			error("bad token");
 	}
 	return Token();
 }
@@ -163,27 +163,27 @@ double primary()
 	return 0;
 }
 
+void calculate()
+{
+	while (cin) {
+		cout << PROMPT;
+		Token t = ts.get();
+		while (t.kind == PRINT)
+			t = ts.get();		// discard all prints
+		if (t.kind == QUIT)
+			return;
+		ts.putback(t);
+		cout << RESULT << expression() << endl;
+	}
+}
+
 int main()
 {
 	try {
-		double val = 0;
-		while (cin) {
-			cout << PROMPT;
-			Token t = ts.get();
-			if (t.kind == QUIT) break;
-			if (t.kind == PRINT)
-				cout << RESULT << val << endl;
-			else {
-				ts.putback(t);
-				val = expression();
-			}
-		}
+		calculate();
+		return 0;
 	}
 	catch (runtime_error &e) {
-		cerr << e.what() << endl;
-		return 1;
-	}
-	catch (exception &e) {
 		cerr << e.what() << endl;
 		return 1;
 	}
