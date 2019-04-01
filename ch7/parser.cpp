@@ -18,6 +18,13 @@
 #include <iostream>
 #include <string>
 
+#define NUMBER		'8'
+#define QUIT		'q'			// quit token 
+#define PRINT		';'			// print token
+
+#define PROMPT		"> "
+#define RESULT		"= "		// used to indicate that what follow is a result
+
 using namespace std;
 
 void error(string s)
@@ -25,30 +32,30 @@ void error(string s)
 	throw runtime_error(s);
 }
 
-class Tocken
+class Token
 {
 public:
-	char	kind;		/* '8': number, '+ - * / % ( )' */
+	char	kind;		/* NUMBER, '+ - * / % ( )' */
 	double	value;
 };
 
-class Tocken_Stream {
+class Token_Stream {
 public:
-			Tocken_Stream();
-	Tocken	get();
-	void	putback(Tocken t);
+			Token_Stream();
+	Token	get();
+	void	putback(Token t);
 
 private:
 	bool   full{false};
-	Tocken buffer;
+	Token buffer;
 };
 
-Tocken_Stream::Tocken_Stream()
+Token_Stream::Token_Stream()
 {
 
 }
 
-void Tocken_Stream::putback(Tocken t)
+void Token_Stream::putback(Token t)
 {
 	if (full)
 		error("putback() into a full buffer");
@@ -56,7 +63,7 @@ void Tocken_Stream::putback(Tocken t)
 	full   = true;
 }
 
-Tocken Tocken_Stream::get()
+Token Token_Stream::get()
 {
 	if (full) {
 		full = false;
@@ -68,30 +75,30 @@ Tocken Tocken_Stream::get()
 		case 'q':
 		case ';':
 		case '+': case '-': case '*': case '/': case '(': case ')':
-			return Tocken{ch};
+			return Token{ch};
 		case '.':
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			cin.putback(ch);
 			double val;
 			cin >> val;
-			return Tocken{'8', val};
+			return Token{NUMBER, val};
 		default:
 			error("bad tocken");
 	}
-	return Tocken();
+	return Token();
 }
 
 double expression();
 double term();
 double primary();
 
-Tocken_Stream ts;
+Token_Stream ts;
 
 double expression()
 {
 	double left = term();
-	Tocken t = ts.get();
+	Token t = ts.get();
 	while (true) {
 		switch (t.kind) {
 			case '+':
@@ -112,7 +119,7 @@ double expression()
 double term()
 {
 	double left = primary();
-	Tocken t = ts.get();
+	Token t = ts.get();
 	while (true) {
 		switch (t.kind) {
 			case '*':
@@ -137,9 +144,9 @@ double term()
 
 double primary()
 {
-	Tocken t = ts.get();
+	Token t = ts.get();
 	switch (t.kind) {
-		case '8':
+		case NUMBER:
 			return t.value;
 			break;
 		case '(':
@@ -161,15 +168,20 @@ int main()
 	try {
 		double val = 0;
 		while (cin) {
-			Tocken t = ts.get();
-			if (t.kind == 'q') break;
-			if (t.kind == ';')
-				cout << "=" << val << endl;
+			cout << PROMPT;
+			Token t = ts.get();
+			if (t.kind == QUIT) break;
+			if (t.kind == PRINT)
+				cout << RESULT << val << endl;
 			else {
 				ts.putback(t);
 				val = expression();
 			}
 		}
+	}
+	catch (runtime_error &e) {
+		cerr << e.what() << endl;
+		return 1;
 	}
 	catch (exception &e) {
 		cerr << e.what() << endl;
