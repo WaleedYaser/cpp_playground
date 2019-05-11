@@ -243,7 +243,7 @@ struct Lines : Shape {	// indepentdent lines
 struct Text : Shape {
 	// the point is the bottom left of the first letter
 	// Text(Point x, const string& s) : lab{ s } { add(x); }
-	Text(Point x, const string& s) : lab{ s }, fnt(fl_font()), fnt_sz(fl_size()) { add(x); }
+	Text(Point x, const string& s) : lab{ s }, fnt(fl_font()) { add(x); }
 
 	void draw_lines() const;
 

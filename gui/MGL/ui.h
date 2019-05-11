@@ -732,6 +732,114 @@ namespace MGL
 
 	//--------------------------------------------------------------------//
 
+	using Fct = double (*) (double);
+
+	struct Function : Shape
+	{
+		Function(Fct f, double r1, double r2, Point orig, int count = 100,
+				 double x_scale = 35, double y_scale = 25);
+	};
+
+	Function::Function(Fct f, double r1, double r2, Point orig,int count = 100,
+					   double x_scale = 35, double y_scale = 25)
+	{
+		if (r2 - r1 <= 0) UTL::error("bad graphics range");
+		if (count <= 0) UTL::error("non-positive graphing count");
+		double dist = (r2 - r1) / count;
+		double r = r1;
+		for (int i = 0; i < count; ++i) {
+			add(Point{orig.x+int(r*x_scale), orig.y-int(f(r)*y_scale)});
+			r += dist;
+		}
+	}
+
+	//--------------------------------------------------------------------//
+
+	struct Axis : Shape
+	{
+		enum Orientation { x, y, z };
+
+		Axis(Orientation d, Point xy, int lenght, int number_of_notches=0,
+			 string label = "");
+
+		void draw_lines() const override;
+		void move(int dx, int dy) override;
+		void set_color(Color c);
+
+		Text label;
+		Lines notches;
+	};
+
+	Axis::Axis(Orientation d, Point xy, int lenght, int number_of_notches, string lab)
+		: label(Point{0, 0}, lab)
+	{
+		if (lenght < 0) UTL::error("bad axis length");
+
+		switch (d) {
+			case Axis::x:
+			{
+				Shape::add(xy);
+				Shape::add(Point{xy.x + lenght, xy.y});
+
+				if (number_of_notches > 0) {
+					int dist = lenght / number_of_notches;
+					int x = xy.x + dist;
+					for (int i = 0; i < number_of_notches; ++i) {
+						notches.add(Point{x, xy.y}, Point{x, xy.y - 5});
+						x += dist;
+					}
+
+				}
+
+				label.move(lenght/3, xy.y + 20);
+				break;
+			}
+			case Axis::y:
+			{
+				Shape::add(xy);
+				Shape::add(Point{xy.x, xy.y - lenght});
+
+				if (number_of_notches > 0) {
+					int dist = lenght / number_of_notches;
+					int y = xy.y - dist;
+					for (int i = 0; i < number_of_notches; ++i) {
+						notches.add(Point{xy.x, y}, Point{xy.x + 5, y});
+						y -= dist;
+					}
+
+				}
+
+				label.move(xy.x - 10, xy.y -lenght - 10);
+				break;
+			}
+			case Axis::z:
+				UTL::error("z axis not implemented");
+		}
+	}
+
+	void Axis::draw_lines() const
+	{
+		Shape::draw_lines();
+		notches.draw();
+		label.draw();
+	}
+
+	void Axis::set_color(Color c)
+	{
+		Shape::set_color(c);
+		notches.set_color(c);
+		label.set_color(c);
+	}
+
+	void Axis::move(int dx, int dy)
+	{
+		Shape::move(dx, dy);
+		notches.move(dx, dy);
+		label.move(dx, dy);
+	}
+
+	//--------------------------------------------------------------------//
+
 
 }
 
