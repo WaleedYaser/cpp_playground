@@ -5,122 +5,73 @@
 #include <vector>
 
 using namespace std;
+using namespace Graph_lib;
 
-struct Distribution
+struct Lines_Window : Window
 {
-	int year, young, middle, old;
+	Lines_Window(Point xy, int w, int h, const string &title);
+	Open_polyline lines;
+
+private:
+	Button next_button;
+	Button quit_button;
+	In_box next_x;
+	In_box next_y;
+	Out_box xy_out;
+
+	void next();
+	void quit();
 };
 
-istream & operator >> (istream &is, Distribution &d)
+Lines_Window::Lines_Window(Point xy, int w, int h, const string &title)
+	: Window{xy, w, h, title},
+	next_button{Point{x_max()-150, 0}, 70, 20, "Next Point",
+		[](Address, Address pw) { reference_to<Lines_Window>(pw).next(); }},
+	quit_button{Point{x_max() - 70, 0}, 70, 20, "Quit",
+		[](Address, Address pw) { reference_to<Lines_Window>(pw).quit(); }},
+	next_x{Point{x_max() - 310, 0}, 50, 20, "next x:"},
+	next_y{Point{x_max() - 210, 0}, 50, 20, "next y:"},
+	xy_out{Point{100, 0}, 100, 20, "current (x, y):"}
 {
-	char ch1 = 0;
-	char ch2 = 0;
-	char ch3 = 0;
-	Distribution dd;
-
-	if (is >> ch1 >> dd.year >> ch2 >> dd.young >> dd.middle >> dd.old >> ch3) {
-		if (ch1 != '(' || ch2 != ':' || ch3 != ')') {
-			is.clear(ios_base::failbit);
-			return is;
-		}
-	}
-	else
-	{
-		return is;
-	}
-	d = dd;
-	return is;
-	
+	attach(next_button);
+	attach(quit_button);
+	attach(next_x);
+	attach(next_y);
+	attach(xy_out);
+	attach(lines);
 }
 
-class Scale
+void Lines_Window::next()
 {
-	int c_base;
-	int v_base;
-	double scale;
-public:
-	Scale(int b, int vb, double s) : c_base{b}, v_base{vb}, scale{s} { }
-	int operator () (int v) const { return c_base + (v - v_base) * scale; }
-};
+	int x = next_x.get_int();
+	int y = next_y.get_int();
+
+	lines.add(Point{x, y});
+
+	ostringstream ss;
+	ss << '(' << x << " ," << y << ')';
+	xy_out.put(ss.str());
+
+	redraw();
+}
+
+void Lines_Window::quit()
+{
+	hide();
+}
 
 int main()
 {
-
-	string flie_name = "japanese-age-data.txt";
-	ifstream ifs {flie_name};
-	if (!ifs) error("can't open ", flie_name);
-
-	using namespace Graph_lib;
-
-	constexpr int x_max = 600;
-	constexpr int y_max = 400;
-
-	constexpr int x_offset = 100;
-	constexpr int y_offset = 60;
-
-	constexpr int x_space = 40;
-	constexpr int y_space = 40;
-
-	constexpr int x_len = x_max - x_offset - x_space;
-	constexpr int y_len = y_max - y_offset - y_space;
-
-	constexpr int base_year = 1960;
-	constexpr int end_year  = 2040;
-
-	constexpr double x_scale = double(x_len) / (end_year - base_year);
-	constexpr double y_scale = double(y_len) / 100;
-
-	Scale xs {x_offset, base_year, x_scale};
-	Scale ys {y_max - y_offset, 0, -y_scale};
-
-
-	Simple_window win {Point{100, 100}, x_max, y_max, "Aging Japan"};
-
-	Axis x {Axis::x, Point{x_offset, y_max - y_offset}, x_len,
-			(end_year - base_year) / 10,
-			"year     1960     1970     1980     1990     "
-			"2000     2010     2020     2030     2040"};
-	x.label.move(-100, 0);
-	win.attach(x);
-	Axis y {Axis::y, Point{x_offset, y_max - y_offset}, y_len, 10, "% of population"};
-	win.attach(y);
-
-	Line current_year {Point{xs(2019), ys(0)}, Point{xs(2019), ys(100)}};
-	current_year.set_style(Line_style::dash);
-	win.attach(current_year);
-
-	Open_polyline children;
-	Open_polyline adults;
-	Open_polyline aged;
-
-	for (Distribution d; ifs >> d; ) {
-		if (d.year < base_year || d.year > end_year) error("year out of range");
-		if (d.young + d.middle + d.old != 100) error("percentage doesn't add up");
-
-		const int x = xs(d.year);
-		children.add(Point{x, ys(d.young)});
-		adults.add(Point{x, ys(d.middle)});
-		aged.add(Point{x, ys(d.old)});
+	try {
+		Lines_Window win {Point{100, 100}, 600, 400, "lines"};
+		return gui_main();
 	}
-
-	Text children_label {Point{20, children.point(0).y}, "age 0-14"};
-	children.set_color(Color::dark_red);
-	children_label.set_color(Color::dark_red);
-	win.attach(children);
-	win.attach(children_label);
-
-	Text adults_label {Point{20, adults.point(0).y}, "age 15-64"};
-	adults.set_color(Color::dark_blue);
-	adults_label.set_color(Color::dark_blue);
-	win.attach(adults);
-	win.attach(adults_label);
-
-	Text aged_label {Point{20, aged.point(0).y}, "age 65+"};
-	aged.set_color(Color::dark_green);
-	aged_label.set_color(Color::dark_green);
-	win.attach(aged);
-	win.attach(aged_label);
-
-	gui_main();
-
+	catch (exception &e) {
+		cerr << "exception: " << e.what() << "\n";
+		return 1;
+	}
+	catch (...) {
+		cerr << "Some Exception\n";
+		return 2;
+	}
 }

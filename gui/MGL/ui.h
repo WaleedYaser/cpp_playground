@@ -72,6 +72,17 @@ namespace UTL
 
 	//--------------------------------------------------------------------//
 
+	typedef void * Address;
+	typedef void (*Callback) (Address, Address);
+
+	template <class T>
+	T& reference_to(Address pw)
+	{
+		return *static_cast<T*>(pw);
+	}
+
+	//--------------------------------------------------------------------//
+
 }
 
 //----------------------------------------------------------------------------//
@@ -840,6 +851,136 @@ namespace MGL
 
 	//--------------------------------------------------------------------//
 
+	using namespace UTL;
+
+	class Widget
+	{
+	public:
+		Widget(Point xy, int w, int h, const string &s, Callback cb);
+
+		virtual void move(int dx, int dy);
+		virtual void hide();
+		virtual void show();
+		virtual void attach(Window &) = 0;
+
+		Point loc;
+		int width;
+		int height;
+		string label;
+		Callback do_it;
+	protected:
+		Window *own;
+		Fl_Widget *pw;
+	};
+
+	//--------------------------------------------------------------------//
+
+	class Button : public Widget
+	{
+	public:
+		Button(Point xy, int w, int h, const string &label, Callback cb)
+		: Widget{xy, w, h, label, cb} { }
+
+		void attach(Window &) override;
+
+	};
+
+	//--------------------------------------------------------------------//
+
+	struct Window
+	{
+		Window(Point xy, int w, int h, const string &title);
+
+		int x_max() const;
+
+		void attach(Widget &d);
+	};
+
+	struct Simple_Window : Window
+	{
+		Simple_Window(Point xy, int w, int h, const string &title);
+
+		void wait_for_button();
+	private:
+		Button next_button;
+		bool button_pushed;
+
+		static void cb_next(Address, Address);
+		void next();
+	};
+
+	Simple_Window::Simple_Window(Point xy, int w, int h, const string &title)
+		: Window(xy, w, h, title),
+		next_button{Point{x_max() - 70, 0}, 70, 20, "Next", cb_next},
+		button_pushed{false}
+	{
+		attach(next_button);
+	}
+
+	void Simple_Window::cb_next(Address, Address pw)
+	{
+		reference_to<Simple_Window>(pw).next();
+	}
+
+	void Simple_Window::wait_for_button()
+	{
+		while(!button_pushed) Fl::wait();
+		button_pushed = false;
+		Fl::redraw();
+	}
+
+	void Simple_Window::next()
+	{
+		button_pushed = true;
+	}
+
+	//--------------------------------------------------------------------//
+
+	struct In_Box : Widget
+	{
+		In_Box(Point xy, int w, int h, const string &s)
+			: Widget{xy, w, h, s, 0} { }
+		int get_int();
+		string get_string();
+
+		void attach(Window &w) override;
+	};
+
+	struct Out_Box : Widget
+	{
+		Out_Box(Point xy, int w, int h, const string & s)
+			: Widget{xy, w, h, s, 0} { }
+		void put(int);
+		void put(const string &);
+
+		void attach(Window &w) override;
+	};
+
+	//--------------------------------------------------------------------//
+
+	struct Menu : Widget
+	{
+		enum Kind { horizontal, vertical };
+		Menu(Point xy, int w, int h, Kind kk, const string & label);
+		Vector_Ref<Button> selection;
+		Kind k;
+		int offset;
+		int attach(Button &b);
+		int attach(Button &p);
+
+		void show() override
+		{
+			for (int i = 0; i < selection.size(); ++i ) 
+				selection[i].show();
+		}
+
+		void hide() override;
+		void move(int dx, int dy) override;
+
+		void attach(Window &w);
+	};
+
+	//--------------------------------------------------------------------//
 
 }
 
