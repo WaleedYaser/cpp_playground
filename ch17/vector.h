@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <initializer_list>
 #include <iostream>
 #include <algorithm>
@@ -11,22 +12,22 @@ class Vector
 {
 private:
 	A alloc;
-	int sz;
-	int space;
+	size_t sz;
+	size_t space;
 	T *elem;
 public:
 	Vector() : sz{0}, space{0}, elem{nullptr} { }
 
-	explicit Vector(int s, T def = T())
-		: sz{s}, space{s}, elem{new T[s]}
+	explicit Vector(size_t s, T def = T())
+		: sz{s}, space{s}, elem{alloc.allocate(sz)}
 	{
-		for (int i = 0; i < s; ++i) elem[i] = def;
+		for (int i = 0; i < sz; ++i) alloc.construct(&elem[i], def);
 	}
 
 	Vector(initializer_list<T> lst)
-		: sz{lst.size()}, elem{new T[sz]}
+		: sz{lst.size()}, elem{alloc.allocate(sz)}
 	{ 
-		copy(lst.begin(), lst.end(), elem);
+		for (int i = 0; i < sz; ++i) alloc.construct(&elem[i], lst.begin()[i]);
 	}
 
 
@@ -36,7 +37,7 @@ public:
 	Vector(Vector &&v);
 	Vector & operator = (Vector &&v);
 
-	~Vector() { delete[] elem; }
+	~Vector();
 
 	T& operator [] (int i) { return elem[i]; }
 	const T& operator [] (int i) const { return elem[i]; }
@@ -54,9 +55,10 @@ public:
 
 template <typename T, typename A>
 Vector<T, A>::Vector(const Vector<T, A> &v)
-	: sz{v.sz}, elem{new T[sz]}
+	: sz{v.sz}, elem{alloc.allocate(sz)}
 {
-	copy(v.elem, v.elem + sz, elem);
+	for (int i = 0; i < sz; ++i)
+		alloc.construct(&elem[i], v[i]);
 }
 
 template <typename T, typename A>
@@ -65,15 +67,18 @@ Vector<T, A> & Vector<T, A>::operator = (const Vector<T, A> &v)
 	if (this == &v) return *this;
 
 	if (space >= v.sz) {
-		copy(v.elem, v.elem+v.sz, elem);
+		for (int i = 0; i < v.sz; ++i) alloc.construct(&elem[i], v[i]);
 		sz = v.sz;
 		return *this;
 	}
 
-	T *p = new T[v.sz];
-	copy(v.elem, v.elem+sz, p);
+	T *p = alloc.allocate(v.sz);
+	for (int i = 0; i < v.sz; ++i) alloc.construct(&elem[i], v[i]);
 
-	if (elem) delete[] elem;
+	if (elem) {
+		for (int i = 0; i < sz; ++i) alloc.destroy(&elem[i]);
+		alloc.deallocate(elem);
+	}
 	elem = p;
 	space = sz = v.sz;
 
@@ -95,7 +100,10 @@ Vector<T, A>::Vector(Vector<T, A> &&v)
 template <typename T, typename A>
 Vector<T, A> & Vector<T, A>::operator = (Vector<T, A> &&v)
 {
-	if (elem) delete[] elem;
+	if (elem) {
+		for (int i = 0; i < sz; ++i) alloc.destroy(&elem[i]);
+		alloc.deallocate(elem);
+	}
 
 	elem = v.elem;
 	sz = v.sz;
@@ -106,6 +114,13 @@ Vector<T, A> & Vector<T, A>::operator = (Vector<T, A> &&v)
 	v.space = 0;
 
 	return *this;
+}
+
+template <typename T, typename A>
+Vector<T, A>::~Vector()
+{
+	for (int i = 0; i < sz; ++i) alloc.destroy(&elem[i]);
+	alloc.deallocate(elem, space);
 }
 
 template <typename T, typename A>
