@@ -7,6 +7,11 @@
 
 using namespace std;
 
+class Out_Of_Range
+{
+
+};
+
 template <typename T>
 struct Allocator
 {
@@ -135,14 +140,14 @@ Vector<T, A>::~Vector()
 template <typename T, typename A>
 T& Vector<T, A>::at(int i)
 {
-	if (i < 0 || i >=sz) throw out_of_range();
+	if (i < 0 || i >=sz) throw Out_Of_Range();
 	return elem[i];
 }
 
 template <typename T, typename A>
 const T& Vector<T, A>::at(int i) const
 {
-	if (i < 0 || i >= sz) throw out_of_range();
+	if (i < 0 || i >= sz) throw Out_Of_Range();
 	return elem[i]; 
 }
 

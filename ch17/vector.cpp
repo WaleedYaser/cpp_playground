@@ -1,7 +1,6 @@
 #include "vector.h"
+#include "unique_ptr.h"
 
-#include <vector>
-#include <memory>
 
 using namespace std;
 
@@ -14,9 +13,9 @@ Vector<int> fill()
 }
 
 
-unique_ptr<vector<int>> make_vec()
+Unique_Ptr<Vector<int>> make_vec()
 {
-	unique_ptr<vector<int>> p {new vector<int>};
+	Unique_Ptr<Vector<int>> p {new Vector<int>};
 
 	for (int i = 0; i < 10; ++i) {
 		p->push_back(i);
@@ -33,7 +32,7 @@ int main()
 	Vector<int> v3 = v2;
 	Vector<int> v4 = fill();
 
-	unique_ptr<vector<int>> v5 = make_vec();
+	Unique_Ptr<Vector<int>> v5 = make_vec();
 	v2[3] = 100;
 
 
