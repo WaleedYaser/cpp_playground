@@ -7,7 +7,16 @@
 
 using namespace std;
 
-template <typename T, typename A = allocator<T>>
+template <typename T>
+struct Allocator
+{
+	T * allocate(size_t sz) { return (T *) malloc(sz * sizeof(T)); }
+	void construct(T *p, T v) { new (p) T(v); }
+	void destroy(T *p) { p->~T(); }
+	void deallocate(T *p) { free(p); }
+};
+
+template <typename T, typename A = Allocator<T>>
 class Vector
 {
 private:
@@ -120,7 +129,7 @@ template <typename T, typename A>
 Vector<T, A>::~Vector()
 {
 	for (int i = 0; i < sz; ++i) alloc.destroy(&elem[i]);
-	alloc.deallocate(elem, space);
+	alloc.deallocate(elem);
 }
 
 template <typename T, typename A>
@@ -144,7 +153,7 @@ void Vector<T, A>::reserve(int newalloc)
 	T *p = alloc.allocate(newalloc);
 	for (int i = 0; i < sz; ++i) alloc.construct(&p[i], elem[i]);
 	for (int i = 0; i < sz; ++i) alloc.destroy(&elem[i]);
-	alloc.deallocate(elem, space);
+	alloc.deallocate(elem);
 
 	elem = p;
 	space = newalloc;
