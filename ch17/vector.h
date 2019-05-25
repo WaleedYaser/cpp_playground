@@ -12,6 +12,9 @@ class Out_Of_Range
 
 };
 
+template <typename C>
+using Iterator = typename C::iterator;
+
 template <typename T>
 struct Allocator
 {
@@ -24,6 +27,19 @@ struct Allocator
 template <typename T, typename A = Allocator<T>>
 class Vector
 {
+public:
+	using size_type = unsigned long;
+	using value_type = T;
+	using iterator = T *;
+	using const_iterator = const T *;
+
+	iterator begin() { return elem; }
+	const_iterator begin() const { return elem; }
+	iterator end() { return elem + sz; }
+	const_iterator end() const { return elem + sz; }
+
+	size_type size() { return sz; }
+
 private:
 	A alloc;
 	size_t sz;
@@ -62,9 +78,15 @@ public:
 	int size() const { return sz; }
 	int capacity() const { return space; }
 
+	T * front() const { return elem; }
+	T * back() const { return elem + sz - 1; }
+
 	void reserve(int newalloc);
 	void resize(int newsize, T def = T());
 	void push_back(const T& d);
+
+	iterator insert(iterator p, const T &val);
+	iterator erase(iterator p);
 };
 
 template <typename T, typename A>
@@ -179,4 +201,33 @@ void Vector<T, A>::push_back(const T&d)
 	if (space == 0) reserve(8);
 	else if (sz == space) reserve(2 * space);
 	alloc.construct(&elem[sz++], d);
+}
+
+template <typename T, typename A>
+typename Vector<T, A>::iterator
+Vector<T, A>::erase(iterator p)
+{
+	if (p == end()) return p;
+	for (auto pos = p + 1; pos != end(); ++pos)
+		*(pos - 1) = *pos;
+	alloc.destroy(end()-1);
+	--sz;
+	return p;
+}
+
+template <typename T, typename A>
+typename Vector<T, A>::iterator
+Vector<T, A>::insert(iterator p, const T &val)
+{
+	int index = p - begin();
+	if (size() == capacity())
+		reserve(size()==0? 8 : 2 * size());
+
+	alloc.construct(elem+sz, *back());
+	++sz;
+	iterator pp = begin() + index;
+	for (auto pos = end() - 1; pos != pp; --pos)
+		*pos = *(pos - 1);
+	*(begin() + index) = val;
+	return pp;
 }

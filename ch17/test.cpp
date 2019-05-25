@@ -1,6 +1,6 @@
 #include "vector.h"
 #include "unique_ptr.h"
-
+#include "array.h"
 
 using namespace std;
 
@@ -27,6 +27,9 @@ Unique_Ptr<Vector<int>> make_vec()
 
 int main()
 {
+	Array<int, 10> a;
+	for (auto &i : a) i = 5;
+	for (const auto &i : a) cout << i << endl;
 	Vector<int> v1(5, 4);
 	Vector<int> v2 = {1, 2, 3, 4, 5};
 	Vector<int> v3 = v2;
@@ -36,13 +39,15 @@ int main()
 	v2[3] = 100;
 
 
-	Vector<Vector<int>> v6 = { {10, 20, 30}, {40, 50, 60}};
-	cout << v6[0].size() << endl;
+	Vector<Vector<int>> v6 = { {10, 20, 30}, {40, 50, 60}, {1, 22, 46} };
+	v6.insert(v6.begin()+1, {1, 2, 3});
+	// v6.erase(v6.begin()+1);
+	cout << v6.size() << endl;
 	for (int i = 0; i < v6.size(); ++i)
 		for (int j = 0; j < v6[i].size(); ++j)
 			cout << v6[i][j] << endl;
 
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < 4; i++)
 		cout << v1[i] << ", " << v2[i] << ", " << v3[i] << ", " << v4[i] << ", " << v5->at(i) << endl;
 }
 
