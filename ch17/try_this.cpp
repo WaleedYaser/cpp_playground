@@ -1,23 +1,24 @@
-#include "vector.h"
-
 #include <iostream>
+#include <set>
+#include <string>
+#include <fstream>
+#include <iterator>
+#include <algorithm>
 
-template <typename Iterator>
-Iterator high(Iterator first, Iterator last)
-{
-	Iterator high = first;
-	for (Iterator p = first; p != last; ++p)
-		if (*p > *high) high = p;
-	return high;
-}
+using namespace std;
 
 int main()
 {
-	double jack[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-	Vector<double> jill = {1, 2, 3, 4, 5, 6, 7};
+	string from, to;
+	cin >> from >> to;
 
-	double *jack_high = high(jack, jack+9);
-	double *jill_hight = high(&jill[0], &jill[0]+jill.size());
+	ifstream is {from};
+	ofstream os {to};
 
-	cout << *jack_high << ", " << *jill_hight << endl;
+	istream_iterator<string> ii{is};
+	istream_iterator<string> eos;
+	ostream_iterator<string> oo {os, "\n"};
+
+	set<string> b {ii, eos};
+	copy(b.begin(), b.end(), oo);
 }
